@@ -1,19 +1,18 @@
 import { defineConfig } from "vite";
-import react, { reactCompilerPreset } from "@vitejs/plugin-react";
-import babel from "@rolldown/plugin-babel";
+import react from "@vitejs/plugin-react";
+import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";
 import fs from "fs";
 import path from "path";
-import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     react(),
-    babel({ presets: [reactCompilerPreset()] }), // 👇 唯一正确、无报错、Vite 官方支持的写法
     cssInjectedByJsPlugin(),
 
     {
-      name: "post-build-base64",
+      name: "post-build-merge",
+      apply: "build",
       closeBundle() {
         const scriptPath = path.resolve(process.cwd(), "dist/script.user.js");
         const scriptInfo = path.resolve(process.cwd(), "script.info");
@@ -28,13 +27,13 @@ export default defineConfig({
 
         // 覆盖回去
         fs.writeFileSync(scriptPath, finalCode, "utf8");
-        console.log("✅ 已自动将 script.js 转为 base64 执行格式");
+        console.log("✅ 已自动合并脚本元数据");
       },
     },
   ],
 
-  // 核心：不生成 HTML
-  appType: "custom",
+  // 开发模式使用 spa，构建使用自定义配置
+  appType: command === "serve" ? "spa" : "custom",
   build: {
     cssCodeSplit: false,
     assetsInlineLimit: 99999999,
@@ -49,4 +48,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

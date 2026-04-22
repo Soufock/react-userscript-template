@@ -9,12 +9,12 @@ import App from "./App.tsx";
 //   </StrictMode>,
 // );
 
-const appContent = document.createElement("div");
-appContent.id = "appContent";
-
-// 插入到你指定的容器
-const target = document.body;
-target.appendChild(appContent);
+const appContent = document.getElementById("appContent") || (() => {
+  const el = document.createElement("div");
+  el.id = "appContent";
+  document.body.appendChild(el);
+  return el;
+})();
 
 createRoot(appContent).render(
   <StrictMode>
