@@ -18,7 +18,6 @@
 - **TypeScript** - 类型安全
 - **Vite** - 构建工具
 - **styled-components** - CSS-in-JS 样式方案
-- **React Compiler** - 自动优化渲染性能
 
 ## 项目结构
 
@@ -108,6 +107,75 @@ function App() {
 
 ## 注意事项
 
-- 项目配置为 `appType: "custom"`，不生成 HTML 文件
+- 开发模式使用 `appType: "spa"`，支持 React 热更新
+- 构建模式使用 `appType: "custom"`，只输出 `script.user.js`
 - CSS 会自动注入到 JS 中，无需额外处理
 - 构建输出格式为 IIFE，可直接作为油猴脚本安装
+
+## 不依赖油猴环境
+
+本项目也可以不依赖油猴运行。如果想自定义注入方式（如作为普通网页脚本、嵌入到其他项目等），只需修改以下两个文件：
+
+**`vite.config.ts`** - 修改构建配置：
+```ts
+// 改为 SPA 模式，输出标准 JS/CSS 文件
+appType: "spa",
+
+// 修改输出格式
+rollupOptions: {
+  output: {
+    format: "es",  // 或 umd
+    entryFileNames: "bundle.js",
+  },
+},
+```
+
+**`src/main.tsx`** - 修改挂载方式：
+```ts
+// 可以挂载到任意 DOM 节点
+const root = document.getElementById("your-container-id");
+if (root) {
+  createRoot(root).render(<App />);
+}
+```
+
+这样就可以将 React 组件以任意方式注入到网页中，不局限于油猴脚本。
+
+## 样式隔离
+
+油猴脚本直接注入样式时，很容易与目标网站的 CSS 产生冲突。本项目采用以下方式解决：
+
+**styled-components 自动隔离**
+
+项目使用 `styled-components` 作为样式方案，每个组件的样式都会生成唯一的类名（如 `sc-xxxxxx`），自动避免与页面原有样式冲突。
+
+```tsx
+// 样式只在组件内部生效，不影响页面其他元素
+const Btn = styled.button`
+  background: #4f46e5;
+  color: white;
+  /* 不会被网站的 button 样式覆盖 */
+`;
+```
+
+**Shadow DOM（可选）**
+
+如果需要更强的隔离，可以在 `main.tsx` 中创建 Shadow DOM：
+
+```ts
+const shadowHost = document.createElement("div");
+shadowHost.id = "my-app-host";
+document.body.appendChild(shadowHost);
+
+const shadowRoot = shadowHost.attachShadow({ mode: "open" });
+const appRoot = document.createElement("div");
+shadowRoot.appendChild(appRoot);
+
+createRoot(appRoot).render(<App />);
+```
+
+Shadow DOM 内的样式完全与外部隔离，网站的 CSS 不会影响组件，组件的样式也不会泄漏到页面。
+
+## 友情链接
+
+- [LinuxDo](https://linux.do/)
