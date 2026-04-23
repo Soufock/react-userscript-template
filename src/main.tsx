@@ -9,15 +9,47 @@ import App from "./App.tsx";
 //   </StrictMode>,
 // );
 
-const appContent = document.getElementById("appContent") || (() => {
-  const el = document.createElement("div");
-  el.id = "appContent";
-  document.body.appendChild(el);
-  return el;
-})();
+// const appContent =
+//   document.getElementById("appContent") ||
+//   (() => {
+//     const el = document.createElement("div");
+//     el.id = "appContent";
+//     document.body.appendChild(el);
+//     return el;
+//   })();
+// createRoot(appContent).render(
+//   <StrictMode>
+//     <App />
+//   </StrictMode>,
+// );
 
-createRoot(appContent).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+function ready(fn: () => void) {
+  if (document.body) return fn();
+
+  const observer = new MutationObserver(() => {
+    if (document.body) {
+      observer.disconnect();
+      fn();
+    }
+  });
+
+  observer.observe(document.documentElement, {
+    childList: true,
+  });
+}
+
+ready(() => {
+  const appContent =
+    document.getElementById("appContent") ||
+    (() => {
+      const el = document.createElement("div");
+      el.id = "appContent";
+      document.body.appendChild(el);
+      return el;
+    })();
+  createRoot(appContent).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+});
